@@ -20,13 +20,52 @@ const { NotImplementedError } = require('../extensions/index.js');
  * 
  */
 class VigenereCipheringMachine {
-  encrypt() {
-    throw new NotImplementedError('Not implemented');
-    // remove line with error and write your code here
+  constructor(direct = true) {
+    this.direct = direct;
   }
-  decrypt() {
-    throw new NotImplementedError('Not implemented');
-    // remove line with error and write your code here
+
+  shift(char, shift) {
+    const code = char.charCodeAt(0);
+    const shiftCode = shift.charCodeAt(0) - 65;
+    if (code >= 65 && code <= 90) {
+      return String.fromCharCode(((code - 65 + shiftCode) % 26) + 65);
+    } else {
+      return char;
+    }
+  }
+
+  encrypt(message, key) {
+    if (!message || !key) {
+      throw new Error('Incorrect arguments!');
+    }
+    const result = [];
+    let j = 0;
+    for (let i = 0; i < message.length; i++) {
+      if (message[i].match(/[A-Z]/i)) {
+        result.push(this.shift(message[i].toUpperCase(), key[j % key.length].toUpperCase()));
+        j++;
+      } else {
+        result.push(message[i]);
+      }
+    }
+    return this.direct ? result.join('') : result.reverse().join('');
+
+  }
+  decrypt(message, key) {
+    if (!message || !key) {
+      throw new Error('Incorrect arguments!');
+    }
+    const result = [];
+    let j = 0;
+    for (let i = 0; i < message.length; i++) {
+      if (message[i].match(/[A-Z]/i)) {
+        result.push(this.shift(message[i].toUpperCase(), -key[j % key.length].toUpperCase()));
+        j++;
+      } else {
+        result.push(message[i]);
+      }
+    }
+    return this.direct ? result.join('') : result.reverse().join('');
   }
 }
 
