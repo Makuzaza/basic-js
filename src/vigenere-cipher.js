@@ -20,52 +20,70 @@ const { NotImplementedError } = require('../extensions/index.js');
  * 
  */
 class VigenereCipheringMachine {
-  constructor(direct = true) {
-    this.direct = direct;
+  constructor(isDirect = true) {
+    this.isDirect = isDirect;
   }
 
-  shift(char, shift) {
-    const code = char.charCodeAt(0);
-    const shiftCode = shift.charCodeAt(0) - 65;
-    if (code >= 65 && code <= 90) {
-      return String.fromCharCode(((code - 65 + shiftCode) % 26) + 65);
-    } else {
-      return char;
-    }
+  shiftCharacter(char, shift, isEncrypting) {
+    const charCode = char.charCodeAt(0);
+    const baseCode = char === char.toLowerCase() ? 97 : 65;
+
+    const shiftValue = isEncrypting
+      ? (charCode - baseCode + shift) % 26
+      : (charCode - baseCode - shift + 26) % 26;
+
+    return String.fromCharCode(baseCode + shiftValue);
   }
 
   encrypt(message, key) {
-    if (!message || !key) {
+    if (typeof message !== 'string' || typeof key !== 'string' || !message || !key) {
       throw new Error('Incorrect arguments!');
     }
-    const result = [];
-    let j = 0;
-    for (let i = 0; i < message.length; i++) {
-      if (message[i].match(/[A-Z]/i)) {
-        result.push(this.shift(message[i].toUpperCase(), key[j % key.length].toUpperCase()));
-        j++;
-      } else {
-        result.push(message[i]);
-      }
-    }
-    return this.direct ? result.join('') : result.reverse().join('');
 
-  }
-  decrypt(message, key) {
-    if (!message || !key) {
-      throw new Error('Incorrect arguments!');
-    }
-    const result = [];
-    let j = 0;
+    message = message.toUpperCase();
+    key = key.toUpperCase();
+
+    let encryptedMessage = '';
+    let keyIndex = 0;
+
     for (let i = 0; i < message.length; i++) {
-      if (message[i].match(/[A-Z]/i)) {
-        result.push(this.shift(message[i].toUpperCase(), -key[j % key.length].toUpperCase()));
-        j++;
+      const char = message[i];
+
+      if (/[A-Z]/.test(char)) {
+        const shift = key[keyIndex % key.length].charCodeAt(0) - 65;
+        encryptedMessage += this.shiftCharacter(char, shift, true);
+        keyIndex++;
       } else {
-        result.push(message[i]);
+        encryptedMessage += char;
       }
     }
-    return this.direct ? result.join('') : result.reverse().join('');
+
+    return this.isDirect ? encryptedMessage : encryptedMessage.split('').reverse().join('');
+  }
+
+  decrypt(message, key) {
+    if (typeof message !== 'string' || typeof key !== 'string' || !message || !key) {
+      throw new Error('Incorrect arguments!');
+    }
+    message = message.toUpperCase();
+    key = key.toUpperCase();
+
+    let decryptedMessage = '';
+    let keyIndex = 0;
+
+    for (let i = 0; i < message.length; i++) {
+      const char = message[i];
+
+      if (/[A-Z]/.test(char)) {
+        const shift = key[keyIndex % key.length].charCodeAt(0) - 65;
+        decryptedMessage += this.shiftCharacter(char, shift, false);
+        keyIndex++;
+      } else {
+        decryptedMessage += char;
+      }
+    }
+
+    return this.isDirect ? decryptedMessage : decryptedMessage.split('').reverse().join('');
   }
 }
 
